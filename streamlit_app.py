@@ -1,6 +1,81 @@
 import streamlit as st
+import pandas as pd
+import matplotlib.pyplot as plt
+import koreanize_matplotlib
+from streamlit_gsheets import GSheetsConnection
+from datetime import datetime
+import pytz
 
-st.title("🎈 My new app")
-st.write(
-    "Let's start building! For help and inspiration, head over to [docs.streamlit.io](https://docs.streamlit.io/)."
+# Streamlit 페이지 설정
+st.set_page_config(page_title="설문응답공유", page_icon="📊", layout="centered")
+st.title("📊 디지털 기반 업무 적용 실천하기!")
+st.info(
+    """
+    설문 결과를 분석하여 조별로 응답 내용을 확인하고 원그래프를 생성합니다.
+    """
 )
+
+# Google Sheets 데이터 읽기
+conn = st.connection("gsheets", type=GSheetsConnection)
+spreadsheet_url = st.secrets["gsheet"]["url"]
+data = conn.read(spreadsheet=spreadsheet_url).iloc[:, 3:21]
+
+if st.button("🔄 데이터 새로고침"):
+    st.cache_data.clear()
+
+# 데이터 확인
+if data.empty:
+    st.warning("데이터가 없습니다. 스프레드시트를 확인해주세요.")
+else:
+    st.success("데이터가 성공적으로 로드되었습니다!")
+
+    # 데이터 처리: 첫 번째~9번째 열 가져오기
+    data_2 = data.iloc[:, :9]
+    data_2.columns = [f"col_{i+1}" for i in range(data_2.shape[1])]
+
+    # 열 이름을 조 번호로 가정하고 각 열을 조별로 분석
+    for i, col in enumerate(data_2.columns):
+        group_number = i + 1
+        st.subheader(f"{group_number}조 결과")
+
+        group_data = data_2[col].dropna()
+        response_counts = group_data.str.split(', ').explode().value_counts()
+
+        # 레이아웃 설정: 원그래프와 텍스트 병렬 표시
+        col1, col2 = st.columns(2)
+
+        with col1:
+            # 원그래프 생성 (색상 팔레트 지정)
+            colors = ["#B1F0F7", "#86C5D9", "#ECE7CB", "#F5D488", "#FFD700", "#FFA07A", "#87CEFA", "#9370DB"]
+            fig, ax = plt.subplots()
+            ax.pie(response_counts, labels=response_counts.index, autopct="%1.1f%%", startangle=90, colors=colors)
+            ax.axis("equal")
+            st.pyplot(fig)
+
+
+        with col2:
+            # 주관식 응답 정리
+            st.write("#### 주관식 응답")
+            if data.shape[1] > 9:
+                subjective_column_index = 9 + i  # 10번째 열부터 각 조별 열 선택
+                subjective_responses = data.iloc[:, subjective_column_index].tolist()
+                # st.write(subjective_responses)
+                if subjective_responses:
+                    temp = data.iloc[:, subjective_column_index].dropna()
+                    temp.columns = ["주관식 피드백 모아보기"]
+                    st.dataframe(temp, hide_index=True)
+
+                    # for j, response in enumerate(subjective_responses, start=1):
+                        # st.write(i, response)
+                        # st.write(f"- {response}")
+
+# 하단 Made by 메시지
+st.markdown(
+    """
+    <div style="text-align: center; padding: 10px; background-color: #f8f9fa; color: #6c757d; border-top: 1px solid #dee2e6;">
+        <p><strong>Made with ❤️ by 반포고 황수빈</strong></p>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
