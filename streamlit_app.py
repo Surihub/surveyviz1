@@ -8,17 +8,11 @@ import pytz
 
 # Streamlit 페이지 설정
 st.set_page_config(page_title="설문응답공유", page_icon="📊", layout="centered")
-st.title("📊 디지털 기반 업무 적용 실천하기!")
-st.info(
-    """
-    설문 결과를 분석하여 조별로 응답 내용을 확인하고 원그래프를 생성합니다.
-    """
-)
-
+st.title("📊 설문결과 공유")
 # Google Sheets 데이터 읽기
 conn = st.connection("gsheets", type=GSheetsConnection)
 spreadsheet_url = st.secrets["gsheet"]["url"]
-data = conn.read(spreadsheet=spreadsheet_url).iloc[:, 3:21]
+data = conn.read(spreadsheet=spreadsheet_url).iloc[:, 3:23]
 
 if st.button("🔄 데이터 새로고침"):
     st.cache_data.clear()
@@ -36,10 +30,11 @@ else:
     # 열 이름을 조 번호로 가정하고 각 열을 조별로 분석
     for i, col in enumerate(data_2.columns):
         group_number = i + 1
-        st.subheader(f"{group_number}조 결과")
+        st.write(f"##### {group_number}조 결과")
 
         group_data = data_2[col].dropna()
         response_counts = group_data.str.split(', ').explode().value_counts()
+        st.write("총 요소 수", response_counts.sum())
 
         # 레이아웃 설정: 원그래프와 텍스트 병렬 표시
         col1, col2 = st.columns(2)
@@ -55,7 +50,7 @@ else:
 
         with col2:
             # 주관식 응답 정리
-            st.write("#### 주관식 응답")
+            st.write("##### 주관식 응답")
             if data.shape[1] > 9:
                 subjective_column_index = 9 + i  # 10번째 열부터 각 조별 열 선택
                 subjective_responses = data.iloc[:, subjective_column_index].tolist()
@@ -68,6 +63,26 @@ else:
                     # for j, response in enumerate(subjective_responses, start=1):
                         # st.write(i, response)
                         # st.write(f"- {response}")
+# 마지막 두 열에 대한 데이터 표시
+st.subheader("추가 평가 및 강의 인상 깊은 점")
+
+# 추가 평가 요소
+st.write("#### 추가로 평가에 반영하고 싶으셨던 요소")
+additional_feedback = data.iloc[:, 19].dropna().tolist()
+if additional_feedback:
+    for idx, feedback in enumerate(additional_feedback, start=1):
+        st.write(f"{idx}. {feedback}")
+else:
+    st.write("추가 평가 요소가 없습니다.")
+
+# 강의에서 인상 깊었던 점
+st.write("#### 강의에서 인상 깊었던 점 및 적용 계획")
+lecture_feedback = data.iloc[:, 20].dropna().tolist()
+if lecture_feedback:
+    for idx, feedback in enumerate(lecture_feedback, start=1):
+        st.write(f"{idx}. {feedback}")
+else:
+    st.write("강의 인상 깊은 점에 대한 응답이 없습니다.")
 
 # 하단 Made by 메시지
 st.markdown(
