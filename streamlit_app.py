@@ -64,7 +64,7 @@ else:
                         # st.write(i, response)
                         # st.write(f"- {response}")
 # 마지막 두 열에 대한 데이터 표시
-st.subheader("추가 평가 및 강의 인상 깊은 점")
+# st.subheader("추가 평가 및 강의 인상 깊은 점")
 
 # 추가 평가 요소
 st.write("#### 추가로 평가에 반영하고 싶으셨던 요소")
@@ -75,14 +75,14 @@ if additional_feedback:
 else:
     st.write("추가 평가 요소가 없습니다.")
 
-# 강의에서 인상 깊었던 점
-st.write("#### 강의에서 인상 깊었던 점 및 적용 계획")
-lecture_feedback = data.iloc[:, 20].dropna().tolist()
-if lecture_feedback:
-    for idx, feedback in enumerate(lecture_feedback, start=1):
-        st.write(f"{idx}. {feedback}")
-else:
-    st.write("강의 인상 깊은 점에 대한 응답이 없습니다.")
+# # 강의에서 인상 깊었던 점
+# st.write("#### 강의에서 인상 깊었던 점 및 적용 계획")
+# lecture_feedback = data.iloc[:, 20].dropna().tolist()
+# if lecture_feedback:
+#     for idx, feedback in enumerate(lecture_feedback, start=1):
+#         st.write(f"{idx}. {feedback}")
+# else:
+#     st.write("강의 인상 깊은 점에 대한 응답이 없습니다.")
 
 # 하단 Made by 메시지
 st.markdown(
